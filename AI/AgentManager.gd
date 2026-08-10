@@ -82,5 +82,6 @@ func apply_decision(agent: AgentData, decision: Dictionary) -> void:
 			agent.state = AgentData.State.IDLE
 
 	MemoryStore.record_behavior(agent.id, action, cid, price, qty)
+	SQLiteService.record_behavior(agent.id, action, cid, price, qty, reason, EconomyEngine.state.tick)
 	decisions_total += 1
 	GameLog.info("Agent %s 决策: %s %s@%.2f x%.0f (%s)" % [agent.display_name, action, cid, price, qty, reason])

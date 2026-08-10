@@ -15,8 +15,12 @@ func _bootstrap() -> void:
 	])
 
 
-## 统一退出入口：先关 AI 进程，再退出游戏。
+## 统一退出入口：先存档（SQLite 优先，回退 JSON）、关闭 AI 进程，再退出游戏。
 func quit(exit_code: int = 0) -> void:
 	GameLog.info("应用退出, code=%d" % exit_code)
+	if EconomyEngine.state != null:
+		if not SQLiteService.save_game(EconomyEngine.state):
+			EconomyEngine.state.save()
+		SQLiteService.close_db()
 	AIService.shutdown()
 	get_tree().quit(exit_code)

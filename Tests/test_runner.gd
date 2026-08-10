@@ -25,6 +25,7 @@ func _ready() -> void:
 func _run_all() -> void:
 	print("========== 项目自动化测试 ==========")
 	await _run_test("数据体系（物资/行情/订单/玩家/Agent/城邦状态）", "res://Tests/test_data.gd")
+	await _run_test("SQLite 结构化存档", "res://Tests/test_sqlite.gd")
 	await _run_test("仿真经济算法（供需/撮合/事件/引擎）", "res://Tests/test_economy.gd")
 	await _run_test("多Agent智能体（LLM决策工作流）", "res://Tests/test_agents.gd")
 	await _run_test("RAG记忆与自适应博弈", "res://Tests/test_memory.gd")

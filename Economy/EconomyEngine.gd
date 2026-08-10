@@ -78,6 +78,8 @@ func step_tick(tick_index: int = 0, _delta: float = 0.0) -> void:
 	_roll_events()
 	if state.tick % 10 == 0:
 		MemoryStore.record_market_summary(state)
+		SQLiteService.append_market_bars(state)
+	SQLiteService.record_positions(state)
 
 
 ## ==================== 内部：每 tick 步骤 ====================
@@ -142,6 +144,7 @@ func _roll_events() -> void:
 	}
 	GameLog.info("城邦事件: %s — %s" % [ev.get("label", ""), ev.get("desc", "")])
 	MemoryStore.record_event(ev)
+	SQLiteService.record_event(ev, state.tick)
 
 
 func _agents_produce_and_consume() -> void:
