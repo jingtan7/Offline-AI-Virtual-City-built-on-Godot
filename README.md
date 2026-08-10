@@ -1,6 +1,10 @@
-# 离线 AI 虚拟城邦｜多智能体经济沙盘模拟器
+# Offline-AI-Virtual-City-built-on-Godot
+
+离线 AI 虚拟城邦｜多智能体经济沙盘模拟器（Offline AI Virtual City built on Godot）
 
 纯本地离线运行的多智能体经济沙盘：本地 LLM（Ollama）+ 工具调用 + 仿真经济 + AI Agent 集群。
+
+> 📦 仓库：https://github.com/jingtan7/Offline-AI-Virtual-City-built-on-Godot
 
 ## 技术栈
 - **Godot 4.7**（2D 沙盘，纯本地单机）
