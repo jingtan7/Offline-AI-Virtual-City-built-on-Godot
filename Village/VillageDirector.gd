@@ -124,6 +124,25 @@ func _build_buildings() -> void:
 	market.position = Vector2(MARKET_X, GROUND_Y)
 	market.scale = Vector2(1.8, 1.8)
 	add_child(market)
+	# 集市招牌
+	var market_sign := Sprite2D.new()
+	market_sign.texture = assets.sign()
+	market_sign.position = Vector2(MARKET_X - 55, GROUND_Y - 34)
+	market_sign.scale = Vector2(1.3, 1.3)
+	add_child(market_sign)
+	# 水井
+	var well := Sprite2D.new()
+	well.texture = assets.well()
+	well.position = Vector2(1600, GROUND_Y)
+	well.scale = Vector2(1.6, 1.6)
+	add_child(well)
+	# 花丛
+	for i in range(24):
+		var fl := Sprite2D.new()
+		fl.texture = assets.flower()
+		fl.position = Vector2(90.0 + i * 180.0 + randf_range(-30, 30), GROUND_Y - 6)
+		fl.scale = Vector2(1.4, 1.4)
+		add_child(fl)
 
 
 func _build_npcs() -> void:

@@ -161,6 +161,56 @@ func hill() -> ImageTexture:
 	return tex
 
 
+## ---------- 装饰：花 / 井 / 招牌 ----------
+
+func flower() -> ImageTexture:
+	var key := "flower"
+	if _cache.has(key):
+		return _cache[key]
+	var img := _new_img(8, 8)
+	_fill_rect(img, 3, 4, 4, 8, Color(0.3, 0.6, 0.25))
+	img.set_pixel(3, 2, Color(1, 0.3, 0.5))
+	img.set_pixel(4, 2, Color(1, 0.3, 0.5))
+	img.set_pixel(3, 3, Color(0.9, 0.2, 0.4))
+	img.set_pixel(4, 3, Color(0.9, 0.2, 0.4))
+	var tex := ImageTexture.create_from_image(img)
+	_cache[key] = tex
+	return tex
+
+
+func well() -> ImageTexture:
+	var key := "well"
+	if _cache.has(key):
+		return _cache[key]
+	var img := _new_img(20, 18)
+	_fill_rect(img, 2, 8, 17, 17, Color(0.5, 0.42, 0.32))
+	_fill_rect(img, 2, 6, 4, 8, Color(0.45, 0.37, 0.28))
+	_fill_rect(img, 15, 6, 17, 8, Color(0.45, 0.37, 0.28))
+	_fill_rect(img, 2, 5, 17, 6, Color(0.5, 0.42, 0.32))
+	# 水
+	_fill_rect(img, 4, 9, 15, 14, Color(0.3, 0.55, 0.8))
+	# 井顶横梁与吊桶
+	_fill_rect(img, 3, 1, 16, 2, Color(0.45, 0.37, 0.28))
+	_fill_rect(img, 9, 2, 11, 5, Color(0.4, 0.32, 0.24))
+	_fill_rect(img, 9, 4, 11, 6, Color(0.55, 0.45, 0.35))
+	var tex := ImageTexture.create_from_image(img)
+	_cache[key] = tex
+	return tex
+
+
+func sign() -> ImageTexture:
+	var key := "sign"
+	if _cache.has(key):
+		return _cache[key]
+	var img := _new_img(24, 16)
+	_fill_rect(img, 11, 10, 13, 16, Color(0.45, 0.35, 0.22))
+	_fill_rect(img, 3, 2, 20, 9, Color(0.68, 0.55, 0.35))
+	_fill_rect(img, 3, 2, 20, 3, Color(0.6, 0.48, 0.3))
+	var tex := ImageTexture.create_from_image(img)
+	_cache[key] = tex
+	return tex
+
+
 ## ---------- 像素小人分帧 ----------
 
 ## 生成某职业小人某一动画帧。anim: idle/walk1/walk2/work/trade

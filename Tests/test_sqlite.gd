@@ -21,9 +21,15 @@ func _check_save_load() -> Dictionary:
 	EconomyEngine.reset()
 	for i in range(8):
 		EconomyEngine.step_tick(i)
-	SQLiteService.record_positions(EconomyEngine.state)
-	SQLiteService.append_market_bars(EconomyEngine.state)
-	if not SQLiteService.save_game(EconomyEngine.state):
+	# 模拟村庄坐标持久化
+	var st := EconomyEngine.state
+	for j in range(st.agents.size()):
+		(st.agents[j] as AgentData).pos_x = 200.0 + j * 40.0
+		(st.agents[j] as AgentData).pos_y = 308.0
+		(st.agents[j] as AgentData).anim = "walk"
+	SQLiteService.record_positions(st)
+	SQLiteService.append_market_bars(st)
+	if not SQLiteService.save_game(st):
 		return {"ok": false, "name": "SQLite 存档/读档", "msg": "保存失败"}
 	var loaded := SQLiteService.load_game()
 	if loaded == null:
