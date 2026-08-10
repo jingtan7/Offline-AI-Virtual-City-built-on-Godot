@@ -56,6 +56,15 @@ func latest_bar(commodity_id: String) -> MarketBar:
 	return bars[bars.size() - 1]
 
 
+## 按中文名称查找物资（供工具/UI 使用）
+func find_commodity_by_name(display_name: String) -> Commodity:
+	for cid in commodities:
+		var c: Commodity = commodities[cid]
+		if c.name == display_name:
+			return c
+	return null
+
+
 func add_order(order: TradeOrder) -> void:
 	orders.append(order)
 

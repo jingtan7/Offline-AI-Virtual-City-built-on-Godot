@@ -8,6 +8,7 @@ var id: String = ""
 var name: String = ""
 var category: String = "survival"        # survival=生存 / industrial=工业 / trade=贸易
 var base_price: float = 0.0              # 初始基准价
+var current_price: float = 0.0           # 实时物价（阶段三引擎每 tick 迭代）
 var total_stock: float = 0.0             # 城邦总存量
 var output_rate: float = 0.0             # 产出速率（每 tick）
 var consume_rate: float = 0.0            # 消耗速率（每 tick）
@@ -26,12 +27,14 @@ func _init(
 	p_consume: float = 0.0,
 	p_scarcity: float = 0.0,
 	p_heat: float = 0.5,
-	p_limit: float = 0.1
+	p_limit: float = 0.1,
+	p_current: float = 0.0
 ) -> void:
 	id = p_id
 	name = p_name
 	category = p_category
 	base_price = p_base_price
+	current_price = p_base_price if p_current <= 0.0 else p_current
 	total_stock = p_stock
 	output_rate = p_output
 	consume_rate = p_consume
@@ -71,7 +74,8 @@ static func default_commodities() -> Array:
 func to_dict() -> Dictionary:
 	return {
 		"id": id, "name": name, "category": category,
-		"base_price": base_price, "total_stock": total_stock,
+		"base_price": base_price, "current_price": current_price,
+		"total_stock": total_stock,
 		"output_rate": output_rate, "consume_rate": consume_rate,
 		"scarcity_volatility": scarcity_volatility,
 		"heat_factor": heat_factor, "daily_price_limit": daily_price_limit,
@@ -84,6 +88,7 @@ static func from_dict(d: Dictionary) -> Commodity:
 	c.name = str(d.get("name", ""))
 	c.category = str(d.get("category", "survival"))
 	c.base_price = float(d.get("base_price", 0.0))
+	c.current_price = float(d.get("current_price", c.base_price))
 	c.total_stock = float(d.get("total_stock", 0.0))
 	c.output_rate = float(d.get("output_rate", 0.0))
 	c.consume_rate = float(d.get("consume_rate", 0.0))

@@ -55,10 +55,9 @@ func record_interaction(agent_id: String, message: String) -> void:
 	interaction_history.append({"agent": agent_id, "message": message, "time": Time.get_ticks_msec()})
 
 
-## 记录一笔交易并更新市场操作习惯统计
+## 记录一笔交易并更新市场操作习惯统计（资金/库存变动由撮合引擎统一结算）
 func record_trade(commodity_id: String, side: String, price: float, quantity: float) -> void:
 	var amount := price * quantity
-	cash += amount if side == "sell" else -amount
 	var habit: Dictionary = market_habits.get(commodity_id, {})
 	habit[side] = float(habit.get(side, 0.0)) + amount
 	market_habits[commodity_id] = habit

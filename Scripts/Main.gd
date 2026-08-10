@@ -12,18 +12,28 @@ func _ready() -> void:
 	AIService.llm_ready.connect(_on_llm_ready)
 	AIService.llm_failed.connect(_on_llm_failed)
 	SimulationLoop.tick.connect(_on_tick)
-	GameLog.info("主场景就绪")
+	EconomyEngine.start_auto()
+	GameLog.info("主场景就绪（经济引擎已接入仿真循环）")
 
 
 func _on_llm_ready() -> void:
 	status_label.text = "✅ 本地 AI 已就绪：" + AIService.model
-	detail_label.text = "工具已加载: %d 个 ｜ 仿真心跳运行中" % ToolRunner.tool_definitions.size()
+	detail_label.text = "工具已加载: %d 个 ｜ 经济仿真运行中" % ToolRunner.tool_definitions.size()
 
 
 func _on_llm_failed() -> void:
 	status_label.text = "⚠️ 本地 AI 启动失败（请检查 Ollama）"
-	detail_label.text = "详见 logs/ 目录中的日志文件"
+	detail_label.text = "经济仿真仍将运行，详见 logs/ 目录日志"
 
 
 func _on_tick(tick_index: int, _delta: float) -> void:
-	detail_label.text = "仿真心跳 #%d ｜ 工具: %d 个 ｜ 模型: %s" % [tick_index, ToolRunner.tool_definitions.size(), AIService.model]
+	var food: Commodity = EconomyEngine.state.commodities.get("food", null)
+	var detail := "仿真心跳 #%d ｜ Agent: %d ｜ 挂单: %d" % [
+		tick_index,
+		EconomyEngine.state.agents.size(),
+		EconomyEngine.state.orders.size(),
+	]
+	if food != null:
+		detail += " ｜ 粮食价: %.2f" % food.current_price
+	detail += " ｜ 工具: %d 个" % ToolRunner.tool_definitions.size()
+	detail_label.text = detail

@@ -60,9 +60,34 @@ func execute(tool_call: Dictionary) -> Dictionary:
 			return {"success": false, "error": "未知工具: " + name}
 
 
-## 行情查询（阶段一为示例数据，阶段三接入真实供需经济引擎）。
+## 行情查询：优先返回经济引擎实时数据（阶段三），引擎不可用时回退示例数据。
 func _market_query(args: Dictionary) -> Dictionary:
 	var commodity := str(args.get("commodity", "")).strip_edges()
+
+	var engine := get_node_or_null("/root/EconomyEngine")
+	if engine != null:
+		var st: CityState = engine.get("state")
+		if st != null:
+			var c: Commodity = st.find_commodity_by_name(commodity)
+			if c != null:
+				var bar := st.latest_bar(c.id)
+				var gap := 0.0
+				var trend := "横盘"
+				if bar != null:
+					gap = bar.supply_demand_gap
+					var chg := bar.change_pct()
+					trend = "上涨" if chg > 1.0 else ("下跌" if chg < -1.0 else "横盘")
+				return {
+					"success": true,
+					"commodity": c.name,
+					"price": c.current_price,
+					"base_price": c.base_price,
+					"supply": c.total_stock,
+					"demand": maxf(0.0, c.total_stock + gap),
+					"trend": trend,
+				}
+
+	# 兜底：示例数据
 	var market := {
 		"粮食": {"price": 12.5, "supply": 3200, "demand": 3050, "trend": "横盘"},
 		"木材": {"price": 8.2, "supply": 2100, "demand": 2400, "trend": "上涨"},

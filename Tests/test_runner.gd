@@ -22,6 +22,7 @@ func _ready() -> void:
 func _run_all() -> void:
 	print("========== 项目自动化测试 ==========")
 	await _run_test("数据体系（物资/行情/订单/玩家/Agent/城邦状态）", "res://Tests/test_data.gd")
+	await _run_test("仿真经济算法（供需/撮合/事件/引擎）", "res://Tests/test_economy.gd")
 	await _run_test("LLM 稳定性/结构化输出/中文对话", "res://Tests/test_llm.gd")
 	await _run_test("工具调用体系（定义/执行/闭环）", "res://Tests/test_tools.gd")
 	print("\n========== 汇总: 通过=%d 失败=%d ==========" % [passed, failed])

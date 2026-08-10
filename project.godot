@@ -18,6 +18,7 @@ AIService="*res://AI/AIService.gd"
 ToolRunner="*res://AI/ToolRunner.gd"
 SimulationLoop="*res://Scripts/SimulationLoop.gd"
 AppManager="*res://Scripts/AppManager.gd"
+EconomyEngine="*res://Economy/EconomyEngine.gd"
 
 [display]
 

@@ -30,7 +30,7 @@ Godot.exe --headless --path . res://Tests/test_runner.tscn
 Scenes/    # 场景文件
 Scripts/   # 全局单例：AppManager/DataManager/GameLog/SimulationLoop
 AI/        # AIService(进程托管)/LLMClient(统一接口)/ToolRunner(工具执行)/AgentData/tools/prompts
-Economy/   # 数据体系(Commodity/MarketBar/TradeOrder/PlayerData/CityState) + 仿真经济（阶段三）
+Economy/   # 数据体系 + 仿真经济(供需物价/撮合/事件/引擎)（阶段二/三完成）
 UI/        # 沙盘可视化（阶段六）
 Data/      # 配置/日志/存档
 Assets/    # 美术资源
