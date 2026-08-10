@@ -3,6 +3,7 @@ extends Node
 ## 离线 LLM 通用调用客户端（Ollama /api/chat）
 ## 统一入参/出参/异常捕获；支持 Function Calling(tools) 与多轮消息。
 ## 场景复用：智能体决策 / 自然语言对话 / 结构化数据生成。
+## 并发安全：每次调用创建独立 HTTPRequest 节点（支持多 Agent 并发推理）。
 
 signal response_received(result: Dictionary)
 
@@ -11,19 +12,6 @@ var default_model: String = "qwen2:7b"
 var default_temperature: float = 0.7
 var default_max_tokens: int = 1024
 var timeout_sec: float = 120.0
-
-var _http: HTTPRequest
-
-
-func _ready() -> void:
-	_http = HTTPRequest.new()
-	_http.timeout = timeout_sec
-	add_child(_http)
-	_http.request_completed.connect(_on_request_completed)
-
-
-func _on_request_completed(_result: int, _code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
-	response_received.emit({})
 
 
 ## 统一调用入口。
@@ -56,13 +44,19 @@ func chat(
 	if not tools.is_empty():
 		body["tools"] = tools
 
+	var http := HTTPRequest.new()
+	http.timeout = timeout_sec
+	add_child(http)
+
 	var t0 := Time.get_ticks_msec()
-	var err := _http.request(endpoint + "/api/chat", ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(body))
+	var err := http.request(endpoint + "/api/chat", ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(body))
 	if err != OK:
+		http.queue_free()
 		return _make_error("请求发送失败(%d)" % err)
 
-	var result: Array = await _http.request_completed
+	var result: Array = await http.request_completed
 	var elapsed := Time.get_ticks_msec() - t0
+	http.queue_free()
 
 	if result[0] != HTTPRequest.RESULT_SUCCESS:
 		return _make_error("网络错误(%d)，Ollama 不可达？" % result[0], elapsed)

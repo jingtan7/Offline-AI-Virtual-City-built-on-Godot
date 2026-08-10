@@ -76,6 +76,8 @@ func step_tick(tick_index: int = 0, _delta: float = 0.0) -> void:
 	_record_market_bars(match_result.get("volumes", {}))
 	_prune_orders()
 	_roll_events()
+	if state.tick % 10 == 0:
+		MemoryStore.record_market_summary(state)
 
 
 ## ==================== 内部：每 tick 步骤 ====================
@@ -139,6 +141,7 @@ func _roll_events() -> void:
 		"applied_once": false,
 	}
 	GameLog.info("城邦事件: %s — %s" % [ev.get("label", ""), ev.get("desc", "")])
+	MemoryStore.record_event(ev)
 
 
 func _agents_produce_and_consume() -> void:
@@ -168,6 +171,8 @@ func _agents_produce_and_consume() -> void:
 func _agents_place_orders() -> void:
 	var prices := _market_prices()
 	for agent in state.agents:
+		if agent.llm_controlled:
+			continue  # 已被 LLM 决策接管（阶段四），跳过规则行为
 		var occ_output := str(OCCUPATION_OUTPUT.get(agent.occupation, ""))
 		var risk := float(agent.personality.get("risk_tolerance", 0.5))
 		# 食物储备不足 → 求购
@@ -256,6 +261,15 @@ func _count_pending(cid: String) -> int:
 func place_player_order(order_type: int, cid: String, price: float, qty: float) -> TradeOrder:
 	_order_seq += 1
 	var o := TradeOrder.create("p%d" % _order_seq, order_type, cid, price, qty, state.player.player_id, "player", state.tick, ORDER_VALID_TICKS)
+	state.add_order(o)
+	MemoryStore.record_player_trade(cid, "buy" if order_type == TradeOrder.Type.BUY else "sell", price, qty)
+	return o
+
+
+## Agent 挂单（供 AgentManager/AgentBrain 落地 LLM 决策）
+func place_agent_order(agent: AgentData, order_type: int, cid: String, price: float, qty: float) -> TradeOrder:
+	_order_seq += 1
+	var o := TradeOrder.create("a%d" % _order_seq, order_type, cid, price, qty, agent.id, "agent", state.tick, ORDER_VALID_TICKS)
 	state.add_order(o)
 	return o
 

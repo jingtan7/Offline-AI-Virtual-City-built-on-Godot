@@ -11,6 +11,9 @@ var failed: int = 0
 
 
 func _ready() -> void:
+	# 关闭 AgentManager 定时轮询，保证测试确定性；清空记忆库
+	AgentManager.set_enabled(false)
+	MemoryStore.clear()
 	# 看门狗：防止异常挂起
 	get_tree().create_timer(WATCHDOG_SEC).timeout.connect(func() -> void:
 		print("!! 测试超时(" + str(WATCHDOG_SEC) + "s) 强制退出")
@@ -23,6 +26,10 @@ func _run_all() -> void:
 	print("========== 项目自动化测试 ==========")
 	await _run_test("数据体系（物资/行情/订单/玩家/Agent/城邦状态）", "res://Tests/test_data.gd")
 	await _run_test("仿真经济算法（供需/撮合/事件/引擎）", "res://Tests/test_economy.gd")
+	await _run_test("多Agent智能体（LLM决策工作流）", "res://Tests/test_agents.gd")
+	await _run_test("RAG记忆与自适应博弈", "res://Tests/test_memory.gd")
+	await _run_test("城邦沙盘UI与统计", "res://Tests/test_ui.gd")
+	await _run_test("全链路闭环联调", "res://Tests/test_chain.gd")
 	await _run_test("LLM 稳定性/结构化输出/中文对话", "res://Tests/test_llm.gd")
 	await _run_test("工具调用体系（定义/执行/闭环）", "res://Tests/test_tools.gd")
 	print("\n========== 汇总: 通过=%d 失败=%d ==========" % [passed, failed])
