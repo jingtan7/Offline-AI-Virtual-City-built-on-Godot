@@ -1,0 +1,30 @@
+{
+	"type": "function",
+	"function": {
+		"name": "optimize_params",
+		"description": "对单变量目标表达式做网格寻优，找出使目标函数最小或最大的参数 x。用于参数优化与算法调优实验。",
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"objective": {
+					"type": "string",
+					"description": "关于变量 x 的数学表达式，例如 \"(x-3)*(x-3)+2\" 或 \"x*x - 5*x + 6\""
+				},
+				"mode": {
+					"type": "string",
+					"enum": ["min", "max"],
+					"description": "min=求目标最小值，max=求目标最大值"
+				},
+				"range_lo": {
+					"type": "number",
+					"description": "搜索下界，默认 -10"
+				},
+				"range_hi": {
+					"type": "number",
+					"description": "搜索上界，默认 10"
+				}
+			},
+			"required": ["objective", "mode"]
+		}
+	}
+}

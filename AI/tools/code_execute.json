@@ -1,0 +1,21 @@
+{
+	"type": "function",
+	"function": {
+		"name": "code_execute",
+		"description": "在本机沙箱中执行 Python 代码片段，用于算法微调、参数优化实验、数值计算与数据统计。用 print() 输出结果，返回标准输出。",
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"code": {
+					"type": "string",
+					"description": "要执行的 Python 代码。必须用 print() 输出你需要的结果。"
+				},
+				"timeout_ms": {
+					"type": "integer",
+					"description": "执行超时毫秒数，默认 3000"
+				}
+			},
+			"required": ["code"]
+		}
+	}
+}

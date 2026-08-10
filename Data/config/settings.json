@@ -1,0 +1,18 @@
+{
+	"llm": {
+		"endpoint": "http://127.0.0.1:11434",
+		"model": "qwen2:7b",
+		"temperature": 0.7,
+		"max_tokens": 1024,
+		"keep_alive_seconds": 1800
+	},
+	"simulation": {
+		"tick_interval_ms": 1000
+	},
+	"tools": {
+		"enable_code_execute": true,
+		"code_execute_timeout_ms": 3000,
+		"tool_server_enabled": false,
+		"tool_server_port": 8770
+	}
+}

@@ -1,0 +1,27 @@
+; Engine configuration file.
+; Godot 4.x 工程配置 —— 纯本地离线多智能体经济沙盘
+config_version=5
+
+[application]
+
+config/name="Godot离线AI虚拟城邦｜多智能体经济沙盘模拟器"
+config/description="纯本地离线运行的多智能体经济沙盘模拟器：本地LLM + 工具调用 + 仿真经济 + Agent集群"
+run/main_scene="res://Scenes/main.tscn"
+config/features=PackedStringArray("4.7")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameLog="*res://Scripts/GameLog.gd"
+DataManager="*res://Scripts/DataManager.gd"
+AIService="*res://AI/AIService.gd"
+ToolRunner="*res://AI/ToolRunner.gd"
+SimulationLoop="*res://Scripts/SimulationLoop.gd"
+AppManager="*res://Scripts/AppManager.gd"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
