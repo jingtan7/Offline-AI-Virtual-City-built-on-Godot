@@ -1,5 +1,11 @@
 ; Engine configuration file.
-; Godot 4.x 工程配置 —— 纯本地离线多智能体经济沙盘
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
 [application]

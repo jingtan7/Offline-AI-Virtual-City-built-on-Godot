@@ -52,10 +52,19 @@ func _decide_async(agent: AgentData) -> void:
 ## 落地 LLM 决策到经济（公开，便于测试）
 func apply_decision(agent: AgentData, decision: Dictionary) -> void:
 	var action := str(decision.get("action", "hold"))
-	var cid := str(decision.get("commodity", ""))
-	var price := float(decision.get("price", 0.0))
-	var qty := float(decision.get("quantity", 0.0))
+	var cid := str(decision.get("commodity", "")).to_lower().strip_edges()
+	var price := maxf(0.0, float(decision.get("price", 0.0)))
+	var qty := maxf(0.0, float(decision.get("quantity", 0.0)))
 	var reason := str(decision.get("reason", ""))
+
+	# 物资名校验：支持 ID 与中文名，统一为 ID；无效则按 hold 处理
+	var st := EconomyEngine.state
+	if not cid.is_empty() and st != null and not st.commodities.has(cid):
+		var c: Commodity = st.find_commodity_by_name(cid)
+		cid = c.id if c != null else ""
+	if (action == "buy" or action == "sell") and (cid.is_empty() or price <= 0.0 or qty <= 0.0):
+		action = "hold"
+		GameLog.warn("Agent %s 决策物资非法，回退 hold: %s" % [agent.display_name, cid])
 
 	agent.llm_controlled = true
 	agent.last_decision = decision
@@ -64,17 +73,11 @@ func apply_decision(agent: AgentData, decision: Dictionary) -> void:
 		"work":
 			agent.state = AgentData.State.WORKING
 		"buy":
-			if cid.is_empty() or price <= 0.0 or qty <= 0.0:
-				agent.state = AgentData.State.IDLE
-			else:
-				EconomyEngine.place_agent_order(agent, TradeOrder.Type.BUY, cid, price, qty)
-				agent.state = AgentData.State.HOARDING
+			EconomyEngine.place_agent_order(agent, TradeOrder.Type.BUY, cid, price, qty)
+			agent.state = AgentData.State.HOARDING
 		"sell":
-			if cid.is_empty() or price <= 0.0 or qty <= 0.0:
-				agent.state = AgentData.State.IDLE
-			else:
-				EconomyEngine.place_agent_order(agent, TradeOrder.Type.SELL, cid, price, qty)
-				agent.state = AgentData.State.TRADING
+			EconomyEngine.place_agent_order(agent, TradeOrder.Type.SELL, cid, price, qty)
+			agent.state = AgentData.State.TRADING
 		_:
 			agent.state = AgentData.State.IDLE
 

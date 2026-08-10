@@ -25,6 +25,9 @@ var labor_history: Array = []       # 劳作记录
 var state: State = State.IDLE       # 当前状态
 var llm_controlled: bool = false    # 是否由 LLM 决策接管（阶段四）
 var last_decision: Dictionary = {}  # 最近一次 LLM 决策记录
+var pos_x := 0.0                    # 横版村庄坐标（阶段九横版改造）
+var pos_y := 0.0
+var anim := "idle"                  # 当前播放动画名
 
 
 func occupation_label() -> String:
@@ -69,6 +72,7 @@ func to_dict() -> Dictionary:
 		"memory": memory, "trade_history": trade_history,
 		"labor_history": labor_history, "state": int(state),
 		"llm_controlled": llm_controlled, "last_decision": last_decision,
+		"pos_x": pos_x, "pos_y": pos_y, "anim": anim,
 	}
 
 
@@ -87,6 +91,9 @@ static func from_dict(d: Dictionary) -> AgentData:
 	a.state = int(d.get("state", int(State.IDLE)))
 	a.llm_controlled = bool(d.get("llm_controlled", false))
 	a.last_decision = d.get("last_decision", {})
+	a.pos_x = float(d.get("pos_x", 0.0))
+	a.pos_y = float(d.get("pos_y", 0.0))
+	a.anim = str(d.get("anim", "idle"))
 	return a
 
 
