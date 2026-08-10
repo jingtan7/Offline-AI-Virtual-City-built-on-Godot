@@ -14,7 +14,7 @@ static func decide(agent: AgentData, state: CityState) -> Dictionary:
 		return {}
 	var perception := _perceive(state, agent)
 	var self_check := _self_check(agent)
-	var memories := MemoryStore.search(_memory_query(agent), 3)
+	var memories := await _retrieve_memories(agent)
 	var system := AgentPrompts.system_prompt_for(agent.occupation)
 	var user := _build_prompt(agent, perception, self_check, memories)
 	var raw: Dictionary = await AIService.llm_client.chat_structured(
@@ -60,6 +60,15 @@ static func _self_check(agent: AgentData) -> String:
 ## 记忆检索查询词
 static func _memory_query(agent: AgentData) -> String:
 	return "行情走势 城邦事件 城主交易 交易经验 %s" % agent.occupation_label()
+
+
+## 检索记忆：优先 ChromaDB（每 NPC 独立库），不可用时回退内置 MemoryStore
+static func _retrieve_memories(agent: AgentData) -> Array:
+	var query := _memory_query(agent)
+	var memories: Array = await RAGService.search(agent.id, query, 3)
+	if memories.is_empty():
+		memories = MemoryStore.search(query, 3)
+	return memories
 
 
 static func _build_prompt(agent: AgentData, perception: String, self_check: String, memories: Array) -> String:

@@ -28,6 +28,7 @@ func _run_all() -> void:
 	await _run_test("仿真经济算法（供需/撮合/事件/引擎）", "res://Tests/test_economy.gd")
 	await _run_test("多Agent智能体（LLM决策工作流）", "res://Tests/test_agents.gd")
 	await _run_test("RAG记忆与自适应博弈", "res://Tests/test_memory.gd")
+	await _run_test("ChromaDB 向量记忆（RAG）", "res://Tests/test_rag.gd")
 	await _run_test("横版像素村庄（NPC移动/动画/决策映射）", "res://Tests/test_village.gd")
 	await _run_test("城邦沙盘UI与统计", "res://Tests/test_ui.gd")
 	await _run_test("全链路闭环联调", "res://Tests/test_chain.gd")

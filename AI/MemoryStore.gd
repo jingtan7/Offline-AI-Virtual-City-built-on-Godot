@@ -87,13 +87,24 @@ func search(query: String, k: int = 3) -> Array:
 
 ## Agent 行为入库（RAG 决策依据）
 func record_behavior(agent_id: String, action: String, cid: String, price: float, qty: float) -> void:
-	add_memory("%s 执行 %s 操作: %s %.1f 单位 @%.2f" % [agent_id, action, cid, qty, price],
-		"behavior", {"agent": agent_id, "action": action, "commodity": cid})
+	var text := "%s 执行 %s 操作: %s %.1f 单位 @%.2f" % [agent_id, action, cid, qty, price]
+	add_memory(text, "behavior", {"agent": agent_id, "action": action, "commodity": cid})
+	RAGService.record(agent_id, text, "behavior", {"action": action, "commodity": cid})
 
 
 ## 城邦重大事件入库
 func record_event(ev: Dictionary) -> void:
-	add_memory("%s: %s" % [ev.get("label", "事件"), ev.get("desc", "")], "event", ev)
+	var text := "%s: %s" % [ev.get("label", "事件"), ev.get("desc", "")]
+	add_memory(text, "event", ev)
+	RAGService.record("city", text, "event", ev)
+
+
+## 玩家交易习惯入库（自适应博弈：Agent 可检索到城主操作习惯）
+func record_player_trade(cid: String, side: String, price: float, qty: float) -> void:
+	var side_cn := "买入" if side == "buy" else "卖出"
+	var text := "城主 %s %s: %.1f 单位 @%.2f" % [side_cn, _commodity_label(cid), qty, price]
+	add_memory(text, "player_trade", {"commodity": cid, "side": side})
+	RAGService.record("player", text, "player_trade", {"commodity": cid, "side": side})
 
 
 ## 行情时序摘要入库（供 RAG 检索历史行情走势）
@@ -102,13 +113,9 @@ func record_market_summary(state: CityState) -> void:
 	for cid in state.commodities:
 		var c: Commodity = state.commodities[cid]
 		parts.append("%s=%.1f" % [c.name, c.current_price])
-	add_memory("tick#%d 城邦行情: %s" % [state.tick, "、".join(parts)], "market")
-
-
-## 玩家交易习惯入库（自适应博弈：Agent 可检索到城主操作习惯）
-func record_player_trade(cid: String, side: String, price: float, qty: float) -> void:
-	add_memory("城主 %s %s: %.1f 单位 @%.2f" % [side, _commodity_label(cid), qty, price],
-		"player_trade", {"commodity": cid, "side": side})
+	var text := "tick#%d 城邦行情: %s" % [state.tick, "、".join(parts)]
+	add_memory(text, "market")
+	RAGService.record("city", text, "market", {"tick": state.tick})
 
 
 func _commodity_label(cid: String) -> String:
