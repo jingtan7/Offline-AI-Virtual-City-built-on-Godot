@@ -1,92 +1,77 @@
-# 项目技术文档：Offline-AI-Virtual-City-built-on-Godot
+# 项目技术文档：Side-Scroller Pixel-Style Offline-AI Virtual City
 
-离线 AI 虚拟城邦｜多智能体经济沙盘模拟器 —— 纯本地离线、零网络依赖的工业级 AI 全栈项目。
+横版卷轴像素离线 AI 虚拟城邦 —— 纯本地离线、零网络依赖的工业级 AI 全栈项目。
 
 ## 1. 整体技术架构
 
 ```
-┌──────────────────────────── 表现层 ────────────────────────────┐
-│  CityUI.gd 城邦沙盘界面（总览/行情列表/K线/交易/聊天/库存复盘） │
-│  KLineChart.gd 经济K线可视化（价格曲线+成交量柱）               │
-└────────────────────────────┬───────────────────────────────────┘
-                             │ tick 刷新
-┌────────────────────────────▼───────────────────────────────────┐
-│  EconomyEngine.gd 仿真主引擎（Autoload，SimulationLoop 驱动）   │
-│   每tick：事件→Agent产出消耗→挂单→撮合→供需物价→行情入库        │
-│  SupplyDemand.gd 供需物价 / MatchingEngine.gd 撮合引擎          │
-│  EconomyEvent.gd 随机事件 / StatsService.gd 复盘统计            │
-│  CityState.gd 城邦状态容器（物资/玩家/Agent/订单/行情，JSON存档）│
-└────────────────────────────┬───────────────────────────────────┘
-                             │ 挂单/行情/决策
-┌────────────────────────────▼───────────────────────────────────┐
-│  AgentManager.gd 多Agent并发轮询（异步LLM决策调度）              │
-│  AgentBrain.gd 思考链路：感知→自查→记忆检索→LLM推理→落地        │
-│  AgentPrompts.gd 五职业人设Prompt（农夫/矿工/商人/工匠/投机者）  │
-│  MemoryStore.gd 本地向量记忆库（bigram哈希TF + 余弦检索）        │
-└────────────────────────────┬───────────────────────────────────┘
-                             │ 本地 HTTP (127.0.0.1:11434)
-┌────────────────────────────▼───────────────────────────────────┐
-│  AIService.gd 进程托管(探活/拉起/保活/销毁) + LLMClient 统一接口 │
-│  ToolRunner.gd 工具执行器（market_query/code_execute/优化）      │
-│  Ollama 本地大模型（qwen2:7b）                                  │
-└─────────────────────────────────────────────────────────────────┘
+┌────────────────────────── 表现层（横版像素村庄） ──────────────────────────┐
+│  VillageDirector.gd 村庄导演：TileMap地面/房屋/树/市场/农田/矿点/Camera2D横滚 │
+│  VillageNPC.gd 像素NPC实体：Sprite2D + AnimationPlayer(walk/idle/work/trade) │
+│  PixelAssets.gd 程序化像素生成器（零外部素材）                              │
+│  VillageHUD.gd 叠加HUD（行情条/交易/市民对话/事件）                          │
+└─────────────────────────────┬───────────────────────────────────────────────┘
+                              │ 决策 → 行动指令（去集市/劳作/回家/闲逛）
+┌─────────────────────────────▼───────────────────────────────────────────────┐
+│  EconomyEngine.gd 仿真引擎（供需物价/撮合/事件/行情）                        │
+│  AgentManager.gd 多Agent并发轮询  AgentBrain.gd 思考链路(感知→自查→记忆→推理) │
+└──────────────┬───────────────────────────────┬──────────────────────────────┘
+               │ 位置/行为/事件/行情              │ RAG 检索
+┌──────────────▼──────────────┐   ┌─────────────▼──────────────┐
+│  SQLiteService.gd           │   │  RAGService.gd             │
+│  (godot-sqlite 插件)        │   │  (ChromaDB REST v2)        │
+│  表：npc/inventory/orders/  │   │  每NPC独立集合(city/player/ │
+│  market_bars/prices/        │   │  agent_xxxx)               │
+│  behavior_log/event_log/    │   └─────────────┬──────────────┘
+│  buildings/player           │                 │ 嵌入(本地bigram哈希)
+└──────────────┬──────────────┘   ┌─────────────▼──────────────┐
+               │                  │  MemoryStore（内置回退库）  │
+               └──────────────────┴─────────────┬──────────────┘
+┌──────────────────────────────────────────────▼──────────────┐
+│  AIService.gd 进程托管 + LLMClient 统一接口 + ToolRunner 工具  │
+│  Ollama 本地大模型（qwen2:7b）                               │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## 2. 核心机制
 
-### 2.1 供需驱动自治物价（无硬编码价格）
-- 每 tick 聚合所有主体的产出/消耗/挂单 → 供需差值
-- 结合存量水平（短缺溢价/过剩折价）、成交量放大（囤货拉升/抛售崩盘）、均值回归（横盘震荡）
-- 价格变化夹在「单日波动限制」内
+### 2.1 横版像素村庄
+- 4160px 横向世界：TileMap 地面（草地/泥土/路）+ 15 座房屋 + 树 + 集市 + 水井 + 花丛
+- 16×24 像素小人：五职业配色（农夫绿/矿工蓝/商人紫/工匠橙/投机者红），walk 双帧行走 + 上下浮动动画
+- Camera2D 自动平移，点击 NPC 聚焦跟随
 
-### 2.2 多主体撮合交易
-- 价格优先 + 时间优先，AI↔AI / AI↔玩家
-- 成交统一结算资金与库存，实时更新成交量与行情
+### 2.2 存储层（SQLite）
+- godot-sqlite v4.9（官方匹配 Godot 4.7.1，内置 SQLite 3.51）
+- WAL 模式 + 参数化查询（query_with_bindings）
+- NPC 坐标/动画/状态/资金、库存、订单、行情、行为日志、事件全量结构化入库
+- 插件未装时 ClassDB 探测自动回退 JSON 存档
 
-### 2.3 多 Agent LLM 自主决策（工业级思考链路）
-环境感知(实时物价/存量/事件) → 状态自查(资金/库存) → 记忆检索(RAG) → LLM离线推理 → 落地执行
-- 强制结构化输出：`{"action":"work|buy|sell|hold","commodity","price","quantity","reason"}`
-- LLM 决策后的 Agent 由 LLM 接管，引擎跳过规则行为
-- 五类职业差异化人设：目标/约束/风险偏好/对话风格
+### 2.3 RAG 记忆（ChromaDB）
+- ChromaDB REST v2：每 NPC 独立集合 + city/player 全局集合
+- 嵌入向量复用本地 bigram 哈希（零模型下载）
+- 决策前检索 top-k 注入 Prompt；服务未启动回退内置向量库
 
-### 2.4 本地 RAG 记忆与自适应博弈
-- 零依赖向量库：字符 bigram 哈希 TF 向量 + 余弦相似度，JSON 持久化
-- 入库：Agent 行为、城邦事件、行情时序摘要、玩家交易习惯
-- Agent 每次决策前检索相关历史记忆注入 Prompt → 越用越智能
-- 玩家操作习惯被记忆 → Agent 反向博弈
+### 2.4 多 Agent LLM 决策
+- 感知(实时行情)→自查(资金库存)→记忆检索(RAG)→LLM推理→落地执行
+- 输出强制 JSON：action(work/buy/sell/hold) + commodity + price + qty + reason
+- LLM 决策后的 NPC 在村庄中走向集市/工作点并切换动画
 
-### 2.5 本地 LLM 部署与工具调用
-- Ollama 进程托管：游戏启动自动唤醒、保活、退出销毁
-- Function Calling 闭环：LLM 决策可调用 market_query / code_execute / optimize_params
+## 3. 运行依赖
+| 必备 | 说明 |
+|---|---|
+| Ollama + qwen2:7b | 市民大脑（游戏自动拉起） |
+| ChromaDB | RAG 向量记忆（`pip install chromadb` + `chroma run --path data/chroma`） |
+| godot-sqlite 插件 | 已随项目 `addons/` 提供（Windows） |
 
-## 3. 目录结构
-```
-Scenes/   主场景
-Scripts/  全局单例（GameLog/DataManager/SimulationLoop/AppManager）
-AI/       AIService/LLMClient/ToolRunner/AgentBrain/AgentManager/AgentPrompts/MemoryStore/tools/prompts
-Economy/  Commodity/MarketBar/TradeOrder/PlayerData/AgentData/CityState
-          SupplyDemand/MatchingEngine/EconomyEvent/EconomyEngine/StatsService
-UI/       CityUI/KLineChart
-Tests/    自动化测试（8 个套件）
-Tools/    Python 本地工具服务（可选）
-docs/     项目文档
-```
+| 可选 | 说明 |
+|---|---|
+| MySQL | `extra/export_mysql.py` 批量导出行为日志做大数据分析 |
+| 策略进化 | `extra/strategy_evolution.py` 离线生成职业调优报告 |
 
-## 4. 运行与验证
-```powershell
-# 前置：Ollama + qwen2:7b（工程会自动拉起）
-# 编辑器运行：Godot 打开工程 → F5
+## 4. 关键技术难点
+1. Godot 4.7 AnimationPlayer 无 `add_animation` → 用 AnimationLibrary
+2. godot-sqlite 无 `query_with_args/is_open` → 用 `query_with_bindings/get_error_message`
+3. ChromaDB v2 REST 路径（/api/v2）+ 并发建集合竞争 → 自旋锁 + 预创建
+4. 横版 NPC 碰撞卡死 → NPC 之间不碰撞 + 唯一房屋位
+5. autoload 命名冲突（Logger/类名遮蔽）→ 改名/去 class_name
 
-# 自动化测试（headless）
-Godot.exe --headless --path . res://Tests/test_runner.tscn
-
-# Windows 打包
-powershell -File build_windows.ps1
-```
-
-## 5. 关键技术难点
-1. Ollama Function Calling 回传 HTTP 400（`function.index` 序列化）→ `_sanitize_tool_calls` 净化
-2. autoload 名与 Godot 内置类撞名 → 改名 GameLog
-3. LLM 输出不可控 → 强制 JSON 结构化 + `AgentBrain.normalize` 校验回退
-4. 多 Agent 异步决策不阻塞仿真 → AgentManager 独立轮询 + llm_controlled 接管
-5. 全离线向量记忆 → 本地 bigram 哈希嵌入（零依赖）
